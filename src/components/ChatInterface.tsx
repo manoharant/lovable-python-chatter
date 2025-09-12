@@ -2,25 +2,28 @@ import { useState, useRef, useEffect } from "react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, User } from "lucide-react";
+import { Bot } from "lucide-react";
 
-interface Message {
+export interface Message {
   id: string;
   text: string;
   isUser: boolean;
   timestamp: string;
 }
 
-export const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hello! I'm your AI assistant. How can I help you today?",
-      isUser: false,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
-  const [isTyping, setIsTyping] = useState(false);
+interface ChatInterfaceProps {
+  messages: Message[];
+  onSendMessage: (text: string) => void;
+  isTyping: boolean;
+  conversationTitle: string;
+}
+
+export const ChatInterface = ({ 
+  messages, 
+  onSendMessage, 
+  isTyping, 
+  conversationTitle 
+}: ChatInterfaceProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -36,41 +39,16 @@ export const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (text: string) => {
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      isUser: true,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setIsTyping(true);
-
-    // Simulate AI response (replace with actual Python backend call)
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: `I received your message: "${text}". This is a demo response. Connect this to your Python chatbot backend to get real responses!`,
-        isUser: false,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      
-      setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
-    }, 1500);
-  };
-
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border bg-card">
-        <div className="flex items-center gap-3 p-4 max-w-4xl mx-auto">
+        <div className="flex items-center gap-3 p-4">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-primary/90 flex items-center justify-center">
             <Bot className="w-4 h-4 text-primary-foreground" />
           </div>
-          <div>
-            <h1 className="font-semibold text-foreground">AI Chatbot</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-semibold text-foreground truncate">{conversationTitle}</h1>
             <p className="text-sm text-muted-foreground">Powered by Python</p>
           </div>
         </div>
@@ -80,6 +58,16 @@ export const ChatInterface = () => {
       <div className="flex-1 bg-chat-background">
         <ScrollArea ref={scrollAreaRef} className="h-full">
           <div className="max-w-4xl mx-auto p-4 space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-primary to-primary/90 flex items-center justify-center mx-auto mb-4">
+                  <Bot className="w-8 h-8 text-primary-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Start a conversation</h3>
+                <p className="text-muted-foreground">Ask me anything to get started!</p>
+              </div>
+            )}
+            
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
@@ -106,7 +94,7 @@ export const ChatInterface = () => {
 
       {/* Input Area */}
       <ChatInput 
-        onSendMessage={handleSendMessage}
+        onSendMessage={onSendMessage}
         disabled={isTyping}
         placeholder="Ask me anything..."
       />
